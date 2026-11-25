@@ -1,28 +1,33 @@
 
-from flask import Flask
+import sqlite3
+from flask import Flask, render_template
 
 app = Flask(__name__)
+
+DB_PATH = 'app.db'
+
+
+def get_connection():
+    """Открывает соединение с базой и настраивает доступ к полям по имени."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 @app.route('/')
 def index():
-    return """
-    <html>
-        <head>
-            <title>Список задач</title>
-        </head>
-        <body>
-            <h1>Мой список задач</h1>
-            <p>Моё самое первое веб-приложение на Flask!</p>
-            <p><a href="/about">О проекте</a></p>
-        </body>
-    </html>
-    """
+    conn = get_connection()
+    cursor = conn.cursor()
 
+    cursor.execute(
+        "SELECT id, title, status FROM tasks ORDER BY id"
+    )
 
-@app.route('/about')
-def about():
-    return "Это учебный список задач на Flask. Практическая работа №3."
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('index.html', items=rows)
 
 
 if __name__ == '__main__':
